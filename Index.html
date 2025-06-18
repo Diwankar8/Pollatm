@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Poll ATM - Earn with Surveys</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Supabase SDK + Config -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://tdcxkwncfffeixvjaale.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkY3hrd25jZmZmZWl4dmphYWxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNzU4NTAsImV4cCI6MjA2NTg1MTg1MH0.Bd_3YpO21f8cqDLIDKO_bixHZuTEE2Ol5QWG-fwqr8I";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #007bff;
+      --secondary-color: #0056b3;
+      --header-gradient: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+      --sidebar-bg: #1d2430;
+      --sidebar-hover-bg: #2c3a4e;
+      --text-light: #f8f9fa;
+      --text-dark: #343a40;
+      --background-light: #f4f7f9;
+      --card-bg: #ffffff;
+      --border-color: #e9ecef;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --success-color: #28a745;
+      --error-color: #dc3545;
+      --header-height: 62px;
+      --footer-height: 51px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', 'Segoe UI', sans-serif; background: var(--background-light); color: var(--text-dark); height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    .header {
+      background: var(--header-gradient); color: var(--text-light); text-align: center; position: sticky; top: 0; z-index: 998; font-size: 1.5rem; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.1); height: var(--header-height); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+
+    .menu-icon { position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); font-size: 1.25rem; cursor: pointer; }
+    .sidebar { height: 100%; width: 0; position: fixed; top: 0; left: 0; background: var(--sidebar-bg); overflow-x: hidden; transition: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); padding-top: 60px; z-index: 1000; }
+    .sidebar a { padding: 1rem 1.5rem; text-decoration: none; font-size: 1.1rem; font-weight: 500; color: var(--text-light); display: flex; align-items: center; gap: 1rem; transition: 0.3s; }
+    .sidebar a .fa-fw { width: 20px; }
+    .sidebar a:hover { background: var(--sidebar-hover-bg); }
+    .sidebar .closebtn { position: absolute; top: 10px; right: 20px; font-size: 2.25rem; }
+
+    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 999; display: none; opacity: 0; transition: opacity 0.4s; }
+    .overlay.active { display: block; opacity: 1; }
+    
+    main { height: calc(100vh - var(--header-height) - var(--footer-height)); overflow-y: auto; }
+    .section { display: none; max-width: 800px; margin: 0 auto; animation: fadeIn 0.5s ease-in-out; padding: 1.5rem; }
+    .section.active { display: block; }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    body.home-active main { overflow-y: hidden; }
+    body.home-active #home { max-width: none; height: 100%; padding: 0; }
+    body.home-active #home .card { height: 100%; width: 100%; padding: 0; margin: 0; border: none; border-radius: 0; box-shadow: none; }
+    body.home-active #home h3 { display: none; }
+    body.home-active #home iframe { width: 100%; height: 100%; border: none; border-radius: 0; }
+
+    .card { background: var(--card-bg); border-radius: 12px; box-shadow: var(--shadow); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
+    .card h3 { margin-bottom: 1rem; color: var(--primary-color); font-size: 1.4rem; font-weight: 600; border-bottom: 2px solid var(--primary-color); padding-bottom: 0.5rem; display: inline-block; }
+
+    ul, ol { list-style: none; padding-left: 0; }
+    li { padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 1rem; }
+    li:last-child { border-bottom: none; }
+    
+    #leaderboard ol, #referralList { counter-reset: itemCounter; }
+    #leaderboard li::before, #referralList li::before {
+        counter-increment: itemCounter; content: counter(itemCounter); background: var(--primary-color); color: white; font-weight: 600; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    #game-list li { justify-content: space-between; }
+    #game-list li button { flex-shrink: 0; }
+
+    input[type="text"], input[type="number"] { width: 100%; padding: 0.8rem 1rem; font-size: 1rem; border: 1px solid var(--border-color); border-radius: 8px; transition: border-color 0.3s, box-shadow 0.3s; margin-bottom: 1rem; }
+    input[type="text"]:focus, input[type="number"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); }
+    
+    .refer-link-group { display: flex; align-items: center; gap: 0.5rem; }
+    .refer-link-group button { flex-shrink: 0; margin-top: 0; }
+
+    button { background: var(--primary-color); color: white; border: none; padding: 0.8rem 1.5rem; font-size: 1rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: background-color 0.3s, transform 0.2s; }
+    button:hover { background: var(--secondary-color); transform: translateY(-2px); }
+    button:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+    
+    #toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1001; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .toast { padding: 12px 20px; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 4px 10px rgba(0,0,0,0.2); animation: toast-in 0.5s, toast-out 0.5s 3.5s forwards; }
+    .toast.success { background: var(--success-color); }
+    .toast.error { background: var(--error-color); }
+    @keyframes toast-in { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes toast-out { from { opacity: 1; } to { opacity: 0; } }
+
+    footer { background: var(--card-bg); text-align: center; box-shadow: 0 -2px 8px rgba(0,0,0,0.07); height: var(--footer-height); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .form-group { margin-bottom: 1rem; }
+    .amount-options button { background: #e9ecef; color: var(--text-dark); margin: 0 5px 5px 0; font-weight: 500; padding: 0.6rem 1rem; }
+    .amount-options button:hover { background: #d3d9df; }
+    .referral-bonus-card { background: #eef7ff; border: 1px solid #cce5ff; padding: 1rem; border-radius: 8px; }
+    #shortLinkResult { margin-top:20px; font-weight: 600; background-color: #f0f2f5; padding: 15px; border-radius: 8px; display: none; word-break: break-all; }
+    
+    /* Game Modal Styles */
+    .game-modal {
+        display: none; position: fixed; z-index: 1002; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); animation: fadeIn 0.3s; align-items: center; justify-content: center;
+    }
+    .game-modal-content {
+        background-color: var(--sidebar-bg); color: var(--text-light); margin: 0; padding: 0; width: 100%; height: 100%; display: flex; flex-direction: column;
+    }
+    #gameFrameContainer { flex-grow: 1; background: #000; }
+    #gameFrameContainer iframe { width: 100%; height: 100%; border: none; }
+    .game-modal-close {
+        color: #aaa; position: absolute; top: 5px; right: 15px; font-size: 28px; font-weight: bold; z-index: 1003; cursor: pointer;
+    }
+    .game-modal-close:hover, .game-modal-close:focus { color: white; text-decoration: none; }
+    .game-footer {
+        background: var(--sidebar-hover-bg); padding: 10px; text-align: center; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    #gameTimer { font-size: 1rem; font-weight: 500; padding-left: 10px;}
+    #claimGameRewardBtn { padding: 0.6rem 1.2rem; }
+
+  </style>
+</head>
+<body>
+
+  <div id="mySidebar" class="sidebar">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
+    <a href="#" onclick="showSection('home')"><i class="fas fa-home fa-fw"></i> Home</a>
+    <a href="#" onclick="showSection('wallet')"><i class="fas fa-wallet fa-fw"></i> Wallet</a>
+    <a href="#" onclick="showSection('history')"><i class="fas fa-history fa-fw"></i> History</a>
+    <a href="#" onclick="showSection('refer')"><i class="fas fa-share-alt fa-fw"></i> Refer & Earn</a>
+    <a href="#" onclick="showSection('games')"><i class="fas fa-gamepad fa-fw"></i> Earn Games</a>
+    <a href="#" onclick="showSection('shorten')"><i class="fas fa-link fa-fw"></i> Share & Earn</a>
+    <a href="#" onclick="showSection('withdraw')"><i class="fas fa-hand-holding-usd fa-fw"></i> Withdraw</a>
+    <a href="#" onclick="showSection('leaderboard')"><i class="fas fa-trophy fa-fw"></i> Top Earners</a>
+    <a href="#" onclick="showSection('notify')"><i class="fas fa-bell fa-fw"></i> Notifications</a>
+    <a href="#" onclick="showSection('profile')"><i class="fas fa-user-circle fa-fw"></i> Profile</a>
+  </div>
+
+  <div class="header">
+    <span class="menu-icon" onclick="openNav()"><i class="fas fa-bars"></i></span>
+    Poll ATM
+  </div>
+  
+  <div class="overlay" onclick="closeNav()"></div>
+
+  <main>
+    <div id="home" class="section active"><div class="card"><iframe src="https://offers.cpx-research.com/index.php?app_id=27839&ext_user_id=USER123&secure_hash=U6pqObg565qArSP0CRrHK19QVHPdxvKM&username=USER123&email=billionairekart@gmail.com" frameborder="0"></iframe></div></div>
+    <div id="wallet" class="section"><div class="card"><h3><i class="fas fa-wallet"></i> Wallet</h3><p style="font-size: 1.2rem; font-weight: 500;">Your current balance:</p><p id="walletBalance" style="font-size: 2.5rem; font-weight: 700; color: var(--primary-color);"></p></div></div>
+    <div id="history" class="section"><div class="card"><h3><i class="fas fa-history"></i> History</h3><ul><li><i class="fas fa-check-circle" style="color: var(--success-color);"></i> Survey #1 - 100 XP</li><li><i class="fas fa-check-circle" style="color: var(--success-color);"></i> Daily Login Bonus - 10 XP</li></ul></div></div>
+    <div id="refer" class="section"><div class="card"><h3><i class="fas fa-share-alt"></i> Refer & Earn</h3><p>Your unique referral link:</p><div class="refer-link-group"><input type="text" id="referralLink" value="https://pollatm.com/ref?code=USER123" readonly><button onclick="copyReferralLink()">Copy</button></div></div><div class="card"><h3><i class="fas fa-users"></i> Your Referrals (<span id="referralCount">0</span>)</h3><ol id="referralList"></ol></div><div class="card referral-bonus-card"><h3><i class="fas fa-gift"></i> Referral Bonus Program</h3><ul><li><strong>5 Referrals:</strong> Get a 100 XP Bonus!</li><li><strong>15 Referrals:</strong> Get a 500 XP Bonus!</li><li><strong>50 Referrals:</strong> Get a 2500 XP Bonus!</li></ul></div></div>
+
+    <div id="games" class="section">
+        <div class="card">
+            <h3><i class="fas fa-gamepad"></i> Play Games & Earn</h3>
+            <p>Play a game for at least <strong>50 seconds</strong>, then watch a short ad to earn <strong>2 XP</strong>.</p>
+            <ul id="game-list">
+                <li>
+                    <i class="fas fa-puzzle-piece fa-2x" style="color: var(--primary-color);"></i>
+                    <span style="flex-grow: 1;"><strong>Block Puzzle</strong><br><small>A fun and challenging puzzle game.</small></span>
+                    <button onclick="playGame('https://www.gamemonetize.com/games/block-puzzle-jewel/index.html', this)">Play Now</button>
+                </li>
+                 <li>
+                    <i class="fas fa-car fa-2x" style="color: var(--primary-color);"></i>
+                    <span style="flex-grow: 1;"><strong>Endless Car Chase</strong><br><small>Drive as far as you can!</small></span>
+                    <button onclick="playGame('https://www.gamemonetize.com/games/endless-car-chase/index.html', this)">Play Now</button>
+                </li>
+                <li>
+                    <i class="fas fa-motorcycle fa-2x" style="color: var(--primary-color);"></i>
+                    <span style="flex-grow: 1;"><strong>Moto X3M</strong><br><small>Perform stunts in this bike race game.</small></span>
+                    <button onclick="playGame('https://www.gamemonetize.com/games/moto-x3m-spooky-land/index.html', this)">Play Now</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <div id="shorten" class="section"><div class="card"><h3><i class="fas fa-link"></i> Earn by Sharing Links</h3><p>Generate a short link, share it, and once the link is visited, come back and claim your reward of <strong>2 XP</strong> per successful task.</p><div class="form-group"><input type="text" id="originalLink" placeholder="Paste any link e.g. https://example.com" style="margin-bottom: 10px;"><button onclick="generateShortLink()">Generate Short Link</button></div><div id="shortLinkResult"></div></div></div>
+    
+    <div id="withdraw" class="section"><div class="card"><h3><i class="fas fa-hand-holding-usd"></i> Withdraw</h3><p>Your Balance: <strong id="withdrawBalance"></strong></p><p style="margin-bottom: 1rem;">Min. withdrawal: <strong>250 XP ($2.50)</strong></p><div class="form-group"><label for="withdrawalAmount">Amount to Withdraw (in XP)</label><input type="number" id="withdrawalAmount" placeholder="e.g., 250"></div><div class="amount-options"><button onclick="setWithdrawAmount(250)">250 XP</button><button onclick="setWithdrawAmount(500)">500 XP</button><button onclick="setWithdrawAmount(1000)">1000 XP</button></div><div class="form-group"><label for="withdrawalInput">Your UPI ID or Paytm Number</label><input type="text" id="withdrawalInput" placeholder="Enter payment details"></div><button onclick="requestWithdrawal()">Request Withdrawal</button></div></div>
+    <div id="leaderboard" class="section"><div class="card"><h3><i class="fas fa-trophy"></i> Top Earners</h3><ol><li>Ramesh - 9800 XP</li><li>Suresh - 8500 XP</li><li>Priya - 7200 XP</li></ol></div></div>
+    <div id="notify" class="section"><div class="card"><h3><i class="fas fa-bell"></i> Notifications</h3><ul><li><i class="fas fa-gift" style="color: var(--primary-color);"></i> 🎉 New High Paying Survey Added!</li><li><i class="fas fa-check-circle" style="color: var(--success-color);"></i> Your withdrawal of $5 was successful.</li></ul></div></div>
+    <div id="profile" class="section"><div class="card"><h3><i class="fas fa-user-circle"></i> Profile</h3><p><strong>Username:</strong> USER123</p><p><strong>Email:</strong> billionairekart@gmail.com</p><button style="margin-top: 1rem; background: var(--error-color);">Log Out</button></div></div>
+  </main>
+  
+  <div id="gameModal" class="game-modal">
+    <div class="game-modal-content">
+        <span class="game-modal-close" onclick="closeGameModal()">×</span>
+        <div id="gameFrameContainer">
+            <!-- Iframe will be inserted here by JS -->
+        </div>
+        <div class="game-footer">
+            <div id="gameTimer">Play for <span>50</span> seconds to unlock reward.</div>
+            <button id="claimGameRewardBtn" onclick="initiateRewardClaim()" disabled>Claim 2 XP</button>
+        </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+  <footer><p>© 2025 Poll ATM. All Rights Reserved.</p></footer>
+
+  <script>
+    // --- GameMonetize SDK ---
+    // This script and configuration MUST come before your main app script below.
+    let rewardClaimable = false;
+    let currentGameButton = null; // To track the 'Play Now' button
+   
+    window.SDK_OPTIONS = {
+      // IMPORTANT: Replace with your actual GameMonetize Game ID for your website/app
+      gameId: "your_website_game_id_here",
+      onEvent: function (event) {
+         switch (event.name) {
+            case "SDK_GAME_PAUSE":
+               console.log("GameMonetize SDK: Game Paused for Ad");
+               break;
+            case "SDK_GAME_START":
+               // This event fires AFTER an advertisement is complete. Reward the user here.
+               console.log("GameMonetize SDK: Game Resumed After Ad");
+               if (rewardClaimable) {
+                   addXP(2);
+                   showToast("Congratulations! +2 XP awarded!", "success");
+                   const claimBtn = document.getElementById('claimGameRewardBtn');
+                   if(claimBtn) {
+                       claimBtn.textContent = 'Reward Claimed!';
+                   }
+                   if (currentGameButton) {
+                       currentGameButton.disabled = true;
+                       currentGameButton.textContent = 'Played';
+                   }
+                   rewardClaimable = false; // Prevent multiple rewards
+               }
+               break;
+            case "SDK_READY":
+               console.log("GameMonetize SDK is ready.");
+               break;
+            case "SDK_ERROR":
+                // Handle cases where an ad fails to load
+               console.error("GameMonetize SDK Error:", event.payload);
+               showToast("Ad could not be loaded. Please try again.", "error");
+               const claimBtn = document.getElementById('claimGameRewardBtn');
+               if(claimBtn && rewardClaimable) {
+                   claimBtn.disabled = false;
+                   claimBtn.textContent = 'Watch Ad & Claim Reward';
+               }
+               break;
+         }
+      }
+   };
+   (function (d, s, id) {
+       var js, fjs = d.getElementsByTagName(s)[0];
+       if (d.getElementById(id)) return;
+       js = d.createElement(s); js.id = id;
+       js.src = "https://api.gamemonetize.com/sdk.js";
+       fjs.parentNode.insertBefore(js, fjs);
+   })(document, "script", "gamemonetize-sdk");
+  </script>
+
+  <script>
+    const sidebar = document.getElementById("mySidebar");
+    const overlay = document.querySelector(".overlay");
+    let userBalanceXP = 0;
+    const minWithdrawalXP = 250;
+    const apiKey = "f64fe4c5efdaf7b34e027f500e7ddb79763f725c";
+    const referralsData = [ { name: 'Amit Kumar', date: '2024-05-20' }, { name: 'Sunita Sharma', date: '2024-05-18' } ];
+    let gameTimerInterval;
+
+    function openNav() { sidebar.style.width = "280px"; overlay.classList.add('active'); }
+    function closeNav() { sidebar.style.width = "0"; overlay.classList.remove('active'); }
+
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.body.classList.toggle('home-active', id === 'home');
+      closeNav();
+    }
+    
+    function showToast(message, type = 'success') {
+        const toastContainer = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        toastContainer.appendChild(toast);
+        setTimeout(() => { toast.remove(); }, 4000);
+    }
+    
+    function updateBalanceUI() {
+        const balanceString = `${userBalanceXP} XP <span style="font-size: 1.5rem; color: var(--text-dark); font-weight: 500;">($${(userBalanceXP / 100).toFixed(2)})</span>`;
+        document.getElementById('walletBalance').innerHTML = balanceString;
+        document.getElementById('withdrawBalance').innerHTML = `${userBalanceXP} XP ($${(userBalanceXP / 100).
